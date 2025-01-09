@@ -1,12 +1,12 @@
 import { config } from './config.js';
 
-let chart; // Declare a variable to hold the chart instance
-let weatherData; // Declare a variable to store the fetched weather data
-let currentUnit = 'C'; // Track the current temperature unit
+let weatherData; // Store the fetched weather data
+let currentUnit = 'C'; // Default temperature unit
 let selectedDayIndex = 0; // Track the selected day index
+let charts = []; // Array to hold chart instances
 
 function fetchWeatherData(location) {
-    const apiUrl = `${config.URL}forecast.json?q=${encodeURIComponent(location)}&days=7&aqi=yes`;
+    const apiUrl = `${config.URL}forecast.json?q=${encodeURIComponent(location)}&days=7`;
     const apiKey = config.API_KEY; 
 
     fetch(apiUrl, {
@@ -23,7 +23,8 @@ function fetchWeatherData(location) {
     .then(data => {
         weatherData = data; // Store the fetched data
         displayWeather(data, selectedDayIndex); // Display today's weather by default
-        displayGraph(data.forecast.forecastday, 'temperature', selectedDayIndex);
+        displayAllGraphs(data.forecast.forecastday, selectedDayIndex);
+        setVisibility(true);
     })
     .catch(error => {
         console.error('Error:', error);
@@ -33,6 +34,7 @@ function fetchWeatherData(location) {
 
 function displayWeather(data, dayIndex) {
     const location = data.location;
+    const astro = data.forecast.forecastday[dayIndex].astro;
     const current = data.forecast.forecastday[dayIndex].day;
     const forecast = data.forecast.forecastday;
 
@@ -48,14 +50,26 @@ function displayWeather(data, dayIndex) {
                 <span class="unit ${currentUnit === 'F' ? 'active' : ''}" data-unit="F">F</span>
             </div>
         </div>
-        <div class="high-low">High : ${currentUnit === 'C' ? current.maxtemp_c : current.maxtemp_f}°  &nbsp  | &nbsp Low : ${currentUnit === 'C' ? current.mintemp_c : current.mintemp_f}°</div>
+        <div class="high-low">High: ${currentUnit === 'C' ? current.maxtemp_c : current.maxtemp_f}° | Low: ${currentUnit === 'C' ? current.mintemp_c : current.mintemp_f}°</div>
         <div class="details">
-            <div class="detail"><span>Humidity :</span><span>${current.avghumidity}%</span></div>
-            <div class="detail"><span>Precipitation Chances :</span><span>${current.daily_chance_of_rain}%</span></div>
-            <div class="detail"><span>Wind :</span><span>${current.maxwind_kph} KpH</span></div>
+            <div class="detail"><span>Humidity:</span><span>${current.avghumidity}%</span></div>
+            <div class="detail"><span>Precipitation Chances:</span><span>${current.daily_chance_of_rain}%</span></div>
+            <div class="detail"><span>Wind:</span><span>${current.maxwind_kph} KpH</span></div>
+        </div>
+        <div class="additional-details">
+            <h3>Additional Details</h3>
+            <div class="detail"><span>Sunrise:</span><span>${astro.sunrise}</span></div>
+            <div class="detail"><span>Sunset:</span><span>${astro.sunset}</span></div>
+            <div class="detail"><span>Moonrise:</span><span>${astro.moonrise}</span></div>
+            <div class="detail"><span>Moonset:</span><span>${astro.moonset}</span></div>
+            <div class="detail"><span>Moon Phase:</span><span>${astro.moon_phase}</span></div>
+            <div class="detail"><span>Moon Illumination:</span><span>${astro.moon_illumination}%</span></div>
+            <div class="detail"><span>Chance of Rain:</span><span>${current.daily_chance_of_rain}%</span></div>
+            <div class="detail"><span>Will it Rain:</span><span>${current.daily_will_it_rain ? 'Yes' : 'No'}</span></div>
+            <div class="detail"><span>Chance of Snow:</span><span>${current.daily_chance_of_snow}%</span></div>
+            <div class="detail"><span>Will it Snow:</span><span>${current.daily_will_it_snow ? 'Yes' : 'No'}</span></div>
         </div>
     `;
-
 
     const forecastContainer = document.getElementById('forecast');
     forecastContainer.innerHTML = forecast.map((day, index) => `
@@ -67,64 +81,85 @@ function displayWeather(data, dayIndex) {
     `).join('');
 }
 
-function displayGraph(forecast, type, dayIndex) {
-    const ctx = document.getElementById('weatherGraph').getContext('2d');
-    const labels = forecast[dayIndex].hour.map(hour => new Date(hour.time).getHours() + ':00');
-    const data = forecast[dayIndex].hour.map(hour => {
-        switch (type) {
-            case 'temperature':
-                return currentUnit === 'C' ? hour.temp_c : hour.temp_f;
-            case 'precipitation':
-                return hour.precip_mm;
-            case 'wind':
-                return hour.wind_kph;
-            default:
-                return hour.temp_c;
-        }
-    });
+function displayAllGraphs(forecast, dayIndex) {
+    const types = ['temperature', 'precipitation', 'wind'];
+    const units = {
+        temperature: currentUnit === 'C' ? '°C' : '°F',
+        precipitation: 'mm',
+        wind: 'kph'
+    };
 
-    if (chart) {
-        chart.destroy(); // Destroy the previous chart instance
-    }
+    // Destroy existing charts
+    charts.forEach(chart => chart.destroy());
+    charts = []; // Clear the array
 
-    chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: type.charAt(0).toUpperCase() + type.slice(1),
-                data: data,
-                borderColor: '#2196F3',
-                fill: false
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    display: false // Hide the legend
-                }
+    types.forEach((type, index) => {
+        const ctx = document.getElementById(`weatherGraph${index}`).getContext('2d');
+        const labels = forecast[dayIndex].hour.map(hour => new Date(hour.time).getHours() + ':00');
+        const data = forecast[dayIndex].hour.map(hour => {
+            switch (type) {
+                case 'temperature':
+                    return currentUnit === 'C' ? hour.temp_c : hour.temp_f;
+                case 'precipitation':
+                    return hour.precip_mm;
+                case 'wind':
+                    return hour.wind_kph;
+            }
+        });
+
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: type.charAt(0).toUpperCase() + type.slice(1),
+                    data: data,
+                    borderColor: '#2196F3',
+                    fill: false
+                }]
             },
-            scales: {
-                x: {
-                    display: true,
-                    title: {
-                        display: true,
-                        text: 'Time'
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
                     }
                 },
-                y: {
-                    display: true,
-                    title: {
+                scales: {
+                    x: {
                         display: true,
-                        text: type.charAt(0).toUpperCase() + type.slice(1)
+                        title: {
+                            display: true,
+                            text: 'Time'
+                        }
+                    },
+                    y: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: type.charAt(0).toUpperCase() + type.slice(1)
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return value + ' ' + units[type];
+                            }
+                        }
                     }
                 }
             }
-        }
+        });
+
+        charts.push(chart); // Store the chart instance
     });
 }
 
+function setVisibility(visible) {
+    const visibility = visible ? 'visible' : 'hidden';
+    document.querySelector('.content').style.visibility = visibility;
+    document.getElementById('forecast').style.visibility = visibility;
+}
+
+// Event listener for fetching weather data
 document.getElementById('getWeatherBtn').addEventListener('click', function() {
     const cityName = document.getElementById('locationInput').value;
     if (cityName) {
@@ -134,32 +169,20 @@ document.getElementById('getWeatherBtn').addEventListener('click', function() {
     }
 });
 
-document.querySelectorAll('.tab').forEach(tab => {
-    tab.addEventListener('click', function() {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        this.classList.add('active');
-        const type = this.dataset.type;
-        if (weatherData) {
-            displayGraph(weatherData.forecast.forecastday, type, selectedDayIndex);
-        }
-    });
-});
-
+// Event listener for unit switching
 document.getElementById('weatherInfo').addEventListener('click', function(e) {
     if (e.target.classList.contains('unit')) {
         currentUnit = e.target.dataset.unit;
         displayWeather(weatherData, selectedDayIndex);
-        displayGraph(weatherData.forecast.forecastday, 'temperature', selectedDayIndex);
+        displayAllGraphs(weatherData.forecast.forecastday, selectedDayIndex);
     }
 });
 
+// Event listener for changing the selected day
 document.getElementById('forecast').addEventListener('click', function(e) {
     if (e.target.closest('.forecast-day')) {
         selectedDayIndex = e.target.closest('.forecast-day').dataset.index;
         displayWeather(weatherData, selectedDayIndex);
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.querySelector('.tab[data-type="temperature"]').classList.add('active');
-        displayGraph(weatherData.forecast.forecastday, 'temperature', selectedDayIndex);
+        displayAllGraphs(weatherData.forecast.forecastday, selectedDayIndex);
     }
 });
-
