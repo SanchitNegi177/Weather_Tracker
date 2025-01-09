@@ -1,37 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Weather Dashboard</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css" />
 </head>
+
 <body>
     <div class="container">
+        <!-- Topmost side -->
         <div class="search-bar">
-            <input type="text" id="locationInput" placeholder="Enter city name">
+            <input type="text" id="locationInput" placeholder="Enter city name" />
             <button id="getWeatherBtn">Get Weather</button>
         </div>
+
         <div class="content">
-            <div class="weather-card" id="weatherInfo">
-                <!-- Weather card will be populated here -->
-        
+            <!-- Left side -->
+            <div class="weather-card" id="weatherInfo"> </div>
+
+            <!-- Right side -->
+            <div class="graph-container">
+                <canvas id="weatherGraph0"></canvas>
+                <canvas id="weatherGraph1"></canvas>
+                <canvas id="weatherGraph2"></canvas>
             </div>
 
-            <div class="graph-section">
-                <div class="graph-tabs">
-                    <button class="tab active" data-type="temperature">Temperature</button>
-                    <button class="tab" data-type="precipitation">Precipitation</button>
-                    <button class="tab" data-type="wind">Wind</button>
-                </div>
-                <canvas id="weatherGraph"></canvas>
-            </div>
         </div>
-        <div class="forecast" id="forecast">
-            <!-- 7-day forecast will be populated here -->
-        </div>
+
+        <!--Bottom part  -->
+        <div class="forecast" id="forecast" > </div>
     </div>
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script type="module" src="script.js"></script>
 </body>
+
 </html>
