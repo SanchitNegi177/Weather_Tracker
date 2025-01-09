@@ -1,6 +1,5 @@
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    /* background-color: #f4f4f9; */
     color: #333;
     margin: 0;
     padding: 20px;
@@ -48,6 +47,7 @@ button:hover {
     justify-content: space-between;
     margin-bottom: 20px;
     flex-wrap: wrap;
+    visibility: hidden;
 }
 
 .weather-card {
@@ -120,7 +120,8 @@ button:hover {
     margin-bottom: 5px;
 }
 
-.graph-section {
+
+.graph-container {
     background-color: #fff;
     padding: 20px;
     border-radius: 12px;
@@ -129,26 +130,15 @@ button:hover {
     max-width: 48%;
     box-sizing: border-box;
     margin-bottom: 10px;
-}
-
-.graph-tabs {
     display: flex;
-    justify-content: space-around;
-    margin-bottom: 10px;
+    flex-direction: column;
+    width: 100%;
 }
 
-.tab {
-    padding: 5px 10px;
-    cursor: pointer;
-    border: none;
-    background-color: #e0e0e0;
-    border-radius: 4px;
-    transition: background-color 0.3s;
-}
-
-.tab.active {
-    background-color: #2196F3;
-    color: white;
+canvas {
+    width: 100%;
+    height: 300px; 
+    margin-bottom: 20px; 
 }
 
 .forecast {
@@ -159,6 +149,7 @@ button:hover {
     border-radius: 12px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     margin-top: 20px;
+    visibility: hidden;
 }
 
 .forecast-day {
@@ -193,6 +184,4 @@ button:hover {
         max-width: 100%;
     }
 }
-
-
 
