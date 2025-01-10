@@ -6,7 +6,7 @@ let selectedDayIndex = 0; // Track the selected day index
 let charts = []; // Array to hold chart instances
 
 function fetchWeatherData(location) {
-    const apiUrl = `${config.URL}forecast.json?q=${encodeURIComponent(location)}&days=7`;
+    const apiUrl = `${config.URL}forecast.json?q=${location}&days=7`;
     const apiKey = config.API_KEY; 
 
     fetch(apiUrl, {
@@ -50,12 +50,14 @@ function displayWeather(data, dayIndex) {
                 <span class="unit ${currentUnit === 'F' ? 'active' : ''}" data-unit="F">F</span>
             </div>
         </div>
-        <div class="high-low">High: ${currentUnit === 'C' ? current.maxtemp_c : current.maxtemp_f}° | Low: ${currentUnit === 'C' ? current.mintemp_c : current.mintemp_f}°</div>
+
+        <div class="high-low">High: ${currentUnit === 'C' ? current.maxtemp_c : current.maxtemp_f}°${currentUnit} &nbsp |&nbsp Low: ${currentUnit === 'C' ? current.mintemp_c : current.mintemp_f}°${currentUnit} </div>
         <div class="details">
             <div class="detail"><span>Humidity:</span><span>${current.avghumidity}%</span></div>
             <div class="detail"><span>Precipitation Chances:</span><span>${current.daily_chance_of_rain}%</span></div>
             <div class="detail"><span>Wind:</span><span>${current.maxwind_kph} KpH</span></div>
         </div>
+
         <div class="additional-details">
             <h3>Additional Details</h3>
             <div class="detail"><span>Sunrise:</span><span>${astro.sunrise}</span></div>
@@ -76,10 +78,11 @@ function displayWeather(data, dayIndex) {
         <div class="forecast-day ${index == dayIndex ? 'active' : ''}" data-index="${index}">
             <p>${new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' })}</p>
             <img src="${day.day.condition.icon}" alt="${day.day.condition.text}">
-            <p>${currentUnit === 'C' ? day.day.maxtemp_c : day.day.maxtemp_f}° ${currentUnit === 'C' ? day.day.mintemp_c : day.day.mintemp_f}°</p>
+            <p>${currentUnit === 'C' ? day.day.maxtemp_c : day.day.maxtemp_f}°${currentUnit}  ${currentUnit === 'C' ? day.day.mintemp_c : day.day.mintemp_f}°${currentUnit} </p>
         </div>
     `).join('');
 }
+
 
 function displayAllGraphs(forecast, dayIndex) {
     const types = ['temperature', 'precipitation', 'wind'];
@@ -95,7 +98,15 @@ function displayAllGraphs(forecast, dayIndex) {
 
     types.forEach((type, index) => {
         const ctx = document.getElementById(`weatherGraph${index}`).getContext('2d');
-        const labels = forecast[dayIndex].hour.map(hour => new Date(hour.time).getHours() + ':00');
+        const labels = forecast[dayIndex].hour.map(hour => {
+            const date = new Date(hour.time);
+            let hours = date.getHours();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12; // the hour '0' should be '12'
+            return hours + ampm;
+        });
+
         const data = forecast[dayIndex].hour.map(hour => {
             switch (type) {
                 case 'temperature':
@@ -115,7 +126,9 @@ function displayAllGraphs(forecast, dayIndex) {
                     label: type.charAt(0).toUpperCase() + type.slice(1),
                     data: data,
                     borderColor: '#2196F3',
-                    fill: false
+                    backgroundColor:'rgb(160, 210, 250)',
+                    fill: true 
+                    
                 }]
             },
             options: {
@@ -131,6 +144,10 @@ function displayAllGraphs(forecast, dayIndex) {
                         title: {
                             display: true,
                             text: 'Time'
+                        },
+                        ticks: {
+                            maxRotation: 0,
+                            minRotation: 0
                         }
                     },
                     y: {
